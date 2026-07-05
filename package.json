@@ -1,0 +1,30 @@
+{
+  "name": "stroybrands",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:api": "npm run dev -w apps/api",
+    "dev:web": "npm run dev -w apps/web",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "prisma:generate": "npx prisma generate",
+    "prisma:migrate": "npx prisma migrate dev",
+    "prisma:push": "npx prisma db push",
+    "prisma:seed": "npx prisma db seed"
+  },
+  "devDependencies": {
+    "@nestjs/mapped-types": "^2.1.1",
+    "@types/passport-jwt": "^4.0.1",
+    "ioredis-mock": "^8.13.1",
+    "prisma": "^6.0.0",
+    "redis-server": "^1.2.2",
+    "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.0.0"
+  }
+}

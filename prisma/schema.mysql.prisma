@@ -1,0 +1,266 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = env("DATABASE_PROVIDER")
+  url      = env("DATABASE_URL")
+}
+
+enum ShopStatus {
+  active
+  inactive
+}
+
+enum FeedFormat {
+  yml
+  csv
+  json
+}
+
+enum ProductStatus {
+  active
+  inactive
+}
+
+enum DiscountType {
+  percent
+  fixed
+}
+
+enum PromocodeStatus {
+  active
+  inactive
+}
+
+enum ReviewStatus {
+  pending
+  approved
+  rejected
+}
+
+enum UserRole {
+  admin
+  content_manager
+}
+
+enum ImportStatus {
+  running
+  completed
+  failed
+}
+
+model Shop {
+  id                   String   @id @default(uuid())
+  name                 String
+  slug                 String   @unique
+  logoUrl              String?
+  domain               String
+  feedUrl              String
+  feedFormat           FeedFormat
+  updateFrequency      Int
+  paymentDeliveryInfo  String?
+  subid                String?
+  admitadToken         String?
+  status               ShopStatus @default(active)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  categories          ExternalCategory[]
+  categoryMappings    CategoryMapping[]
+  products            Product[]
+  promocodes          Promocode[]
+  clickLogs           ClickLog[]
+  importLogs          ImportLog[]
+
+  @@map("shops")
+}
+
+model Category {
+  id        String     @id @default(uuid())
+  name      String
+  slug      String     @unique
+  parentId  String?
+  parent    Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryTree")
+  sortOrder Int        @default(0)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  mappings   CategoryMapping[]
+  products   Product[]
+
+  @@map("categories")
+}
+
+model ExternalCategory {
+  id                 String   @id @default(uuid())
+  shopId             String
+  shop               Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  externalId         String
+  name               String
+  parentExternalId   String?
+  createdAt          DateTime @default(now())
+
+  @@unique([shopId, externalId])
+  @@map("external_categories")
+}
+
+model CategoryMapping {
+  id                   String   @id @default(uuid())
+  shopId               String
+  shop                 Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  externalCategoryId   String
+  internalCategoryId   String
+  internalCategory     Category @relation(fields: [internalCategoryId], references: [id], onDelete: Cascade)
+  createdAt            DateTime @default(now())
+
+  @@unique([shopId, externalCategoryId])
+  @@map("category_mappings")
+}
+
+model Product {
+  id                  String        @id @default(uuid())
+  shopId              String
+  shop                Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  offerId             String
+  name                String
+  slug                String
+  description         String?
+  brand               String?
+  article             String?
+  price               Float
+  oldPrice            Float?
+  currency            String
+  mainImageUrl        String?
+  additionalImages    String?
+  categoryId          String?
+  category            Category?     @relation(fields: [categoryId], references: [id])
+  externalCategoryId  String?
+  status              ProductStatus @default(active)
+  isNew               Boolean       @default(false)
+  url                 String
+  partnerUrl          String?
+  lastImportedAt      DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  parameters   ProductParameter[]
+  promocodes   Promocode[]
+  reviews      Review[]
+  favorites    Favorite[]
+  clickLogs    ClickLog[]
+
+  @@unique([shopId, offerId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([isNew])
+  @@map("products")
+}
+
+model ProductParameter {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name      String
+  value     String
+  createdAt DateTime @default(now())
+
+  @@map("product_parameters")
+}
+
+model Promocode {
+  id              String          @id @default(uuid())
+  shopId          String
+  shop            Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  productId       String?
+  product         Product?        @relation(fields: [productId], references: [id])
+  code            String
+  description     String?
+  discountType    DiscountType
+  discountValue   Float
+  minOrderAmount  Float?
+  startDate       DateTime
+  endDate         DateTime
+  status          PromocodeStatus @default(active)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@unique([shopId, code])
+  @@index([shopId])
+  @@index([productId])
+  @@index([status])
+  @@map("promocodes")
+}
+
+model Review {
+  id        String       @id @default(uuid())
+  productId String
+  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User         @relation(fields: [userId], references: [id])
+  rating    Int
+  text      String
+  status    ReviewStatus @default(pending)
+  createdAt DateTime     @default(now())
+
+  @@map("reviews")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(content_manager)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  reviews   Review[]
+  favorites Favorite[]
+
+  @@map("users")
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@map("favorites")
+}
+
+model ClickLog {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  shopId    String
+  shop      Shop     @relation(fields: [shopId], references: [id])
+  subid     String?
+  ipHash    String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([shopId])
+  @@index([createdAt])
+  @@map("click_logs")
+}
+
+model ImportLog {
+  id                  String       @id @default(uuid())
+  shopId              String
+  shop                Shop         @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  status              ImportStatus @default(running)
+  productsAdded       Int          @default(0)
+  productsUpdated     Int          @default(0)
+  productsDeactivated Int          @default(0)
+  errorMessage        String?
+  startedAt           DateTime     @default(now())
+  completedAt         DateTime?
+
+  @@map("import_logs")
+}
