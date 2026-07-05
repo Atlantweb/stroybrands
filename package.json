@@ -14,7 +14,13 @@
     "prisma:generate": "npx prisma generate",
     "prisma:migrate": "npx prisma migrate dev",
     "prisma:push": "npx prisma db push",
-    "prisma:seed": "npx prisma db seed"
+    "prisma:seed": "npx prisma db seed",
+    "build:api": "npm run build -w apps/api",
+    "build:web": "npm run build -w apps/web",
+    "start:api": "node apps/api/dist/main.js",
+    "start:web": "npm run start -w apps/web",
+    "start:prod": "npm run start:api & npm run start:web",
+    "setup:prod": "npm install && npx prisma generate && npx prisma db push && npm run build"
   },
   "devDependencies": {
     "@nestjs/mapped-types": "^2.1.1",

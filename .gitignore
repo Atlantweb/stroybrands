@@ -3,7 +3,10 @@ dist/
 .next/
 .env
 .env.local
+.env.production
 *.log
 uploads/
 .turbo/
 coverage/
+prisma/dev.db
+prisma/dev.db-journal
