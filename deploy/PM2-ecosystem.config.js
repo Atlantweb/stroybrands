@@ -2,9 +2,9 @@ module.exports = {
   apps: [
     {
       name: 'stroybrands-api',
-      cwd: './apps/api',
+      cwd: '/app/apps/api',
       script: 'dist/main.js',
-      instances: 2,
+      instances: process.env.PM2_API_INSTANCES || 2,
       exec_mode: 'cluster',
       env: {
         NODE_ENV: 'production',
@@ -13,7 +13,7 @@ module.exports = {
     },
     {
       name: 'stroybrands-web',
-      cwd: './apps/web',
+      cwd: '/app/apps/web',
       script: 'node_modules/next/dist/bin/next',
       args: 'start -p 3000',
       instances: 1,
